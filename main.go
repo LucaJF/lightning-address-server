@@ -1,11 +1,14 @@
 package main
 
 import (
+	"context"
 	"embed"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/cockroachdb/pebble"
@@ -117,6 +120,7 @@ func main() {
 			}, r.FormValue("pin"))
 			if err != nil {
 				w.WriteHeader(500)
+				fmt.Println(err.Error())
 				fmt.Fprint(w, err.Error())
 				return
 			}
@@ -130,6 +134,14 @@ func main() {
 		},
 	)
 
+	router.Path("/success").HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			html := r.FormValue("successHtml")
+			w.Header().Set("content-type", "text/html")
+			fmt.Fprint(w, html)
+		},
+	)
+	
 	api := router.PathPrefix("/api/v1").Subrouter()
 	api.Use(authenticate)
 
@@ -147,8 +159,34 @@ func main() {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 	}
-	log.Debug().Str("addr", srv.Addr).Msg("listening")
-	srv.ListenAndServe()
+	
+	idleConnsClosed := make(chan struct{})
+	go func() {
+		// wait os signal(interrupt or terminate)
+		sig := make(chan os.Signal, 1)
+		signal.Notify(sig, os.Interrupt, syscall.SIGTERM);
+
+		// block and wait
+		<-sig
+
+		// gracefully close server after receiving signal
+		log.Info().Msg("Shutting down server...")
+		if err := srv.Shutdown(context.Background()); err != nil {
+			// Error from closing listeners, or context timeout:
+			log.Fatal().Err(err).Msg("Error shutting down server: ")
+		}
+		log.Info().Msg("Server gracefully stopped.")
+
+		close(idleConnsClosed)
+	}()
+
+	log.Info().Str("addr", srv.Addr).Msg("listening")
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		// Error starting or closing listener:
+		log.Fatal().Err(err).Msg("Error starting server: ")
+	}
+
+	<-idleConnsClosed
 }
 
 func getDomains(s string) []string {

@@ -3,3 +3,6 @@
 *.yaml
 *.env
 satdress
+*-multiple.db
+*-multiple.db/**
+server.log

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Satdress - Federated Lightning Address Server</title>
+    <title>Federated Lightning Address Server</title>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/png" href="https://i.imgur.com/4yaPtA2.png" />
+    <link rel="icon" type="image/png" href="/static/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link
       rel="stylesheet"
@@ -11,6 +11,7 @@
       href="//fonts.googleapis.com/css?family=PT+Sans"
     />
     <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="/static/vue3-toastify@0.1.11_index.css" />
   </head>
   <body>
     <main id="main">
@@ -26,7 +27,7 @@
           Use the form below to connect your own node to a
           <b>Lightning Address</b>.
         </div>
-        <form action="/grab" method="post">
+        <form action="/grab" method="post" @submit.prevent="handleSubmit">
           <div class="field">
             <div class="row">
               <label for="name"> {{usernameInfo}} </label>
@@ -164,6 +165,9 @@
           </div>
           <button class="submit">Submit</button>
         </form>
+        <form action="/success" method="POST" id="resForm">
+          <input type="hidden" name="successHtml" id="successHtml" />
+        </form>
       </div>
       <div class="resources">
         <a
@@ -182,25 +186,80 @@
         </a>
       </div>
     </main>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.2.2/vue.global.prod.min.js"></script>
-    <script>
+    <script type="module">
+      import { createApp } from './static/vue_3.3.4.esm-browser.prod.js'
+      import { toast } from './static/vue3-toastify@0.1.11_+esm.js';
+
       const initial = {} // REPLACED WITH SERVER DATA //
+
+      const options = {
+        autoClose: 3000,
+        closeButton: true,
+        hideProgressBar: false,
+        position: toast.POSITION.TOP_CENTER,
+        pauseOnHover: true,
+        transition: toast.TRANSITIONS.Bounce,
+        toastClassName: 'toastDiv'
+      };
 
       const Main = {
         data() {
           return {
             kind: 'lnd',
             isNew: true,
-            ...initial
+            ...initial,
           }
         },
-
         mounted() {
-          this.kind = ''
+          this.kind = '';
+        },
+        methods: {
+          async handleSubmit() {
+            const form = document.querySelector('form');
+            const action = form.action;
+            const formData = new FormData(form);
+
+            const res = await fetch(action, {
+              method: 'POST',
+              body: formData
+            });
+            const text = await res.text();
+            if (res.ok) {
+              this.notifySuccess(text);
+            } else {
+              const json = this.isValidJSON(text);
+              this.notifyError(!json ? text : json.message);
+            }
+          },
+          notifyError(msg) {
+            toast.error(msg, {
+              ...options
+            });
+          },
+          notifySuccess(html) {
+            toast.success('Success', {
+              ...options,
+              autoClose: 500,
+              onClose: () => {
+                const resForm = document.getElementById('resForm');
+                const successHtml = document.getElementById('successHtml');
+                successHtml.value = html;
+                resForm.submit();
+              },
+            });
+          },
+          isValidJSON(str) {
+            try {
+              const json = JSON.parse(str);
+              return json;
+            } catch (e) {
+              return false;
+            }
+          },
         }
       }
 
-      Vue.createApp(Main).mount('#main')
+      createApp(Main).mount('#main')
     </script>
   </body>
 </html>

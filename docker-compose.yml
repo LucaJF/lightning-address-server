@@ -5,14 +5,14 @@ services:
     build: . 
     container_name: satdress
     environment:
-      - PORT=17422
-      - DOMAIN=satdress.com
+      - PORT=18641
+      - DOMAIN=webchain3.xyz
       - SECRET=askdbasjdhvakjvsdjasd
       - SITE_OWNER_URL=https://t.me/fiatjaf
       - SITE_OWNER_NAME=@fiatjaf
       - SITE_NAME=Satdress
     ports:
-      - 17422:17422
+      - 18641:18641
     volumes:
       - satdress-data:/satdress.com
 

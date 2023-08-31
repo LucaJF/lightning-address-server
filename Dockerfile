@@ -11,8 +11,8 @@ RUN go build
 
 FROM alpine:3.14
 
-ENV PORT=17422
-ENV DOMAIN=satdress.com
+ENV PORT=18641
+ENV DOMAIN=webchain3.xyz
 ENV SECRET=askdbasjdhvakjvsdjasd
 ENV SITE_OWNER_URL=https://t.me/fiatjaf
 ENV SITE_OWNER_NAME=@fiatjaf
@@ -20,6 +20,6 @@ ENV SITE_NAME=Satdress
 
 COPY --from=builder /opt/buid/satdress /usr/local/bin/
 
-EXPOSE 17422
+EXPOSE 18641
 
 CMD ["satdress"]
