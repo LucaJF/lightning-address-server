@@ -34,6 +34,9 @@ type Settings struct {
 
 	ForceMigrate bool   `envconfig:"FORCE_MIGRATE" required:"false" default:false`
 	TorProxyURL  string `envconfig:"TOR_PROXY_URL"`
+
+	CertFile string `envconfig:"CERT" required:"true"`
+	KeyFile  string `envconfig:"PRVKEY" required:"true"`
 }
 
 var (
@@ -121,7 +124,8 @@ func main() {
 			if err != nil {
 				w.WriteHeader(500)
 				fmt.Println(err.Error())
-				fmt.Fprint(w, err.Error())
+				// fmt.Fprint(w, err.Error())
+				fmt.Fprint(w, "internal error")
 				return
 			}
 
@@ -181,7 +185,7 @@ func main() {
 	}()
 
 	log.Info().Str("addr", srv.Addr).Msg("listening")
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err := srv.ListenAndServeTLS(s.CertFile, s.KeyFile); err != nil && err != http.ErrServerClosed {
 		// Error starting or closing listener:
 		log.Fatal().Err(err).Msg("Error starting server: ")
 	}

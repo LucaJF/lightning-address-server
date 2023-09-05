@@ -6,3 +6,5 @@ satdress
 *-multiple.db
 *-multiple.db/**
 server.log
+start.sh
+start_bg.sh

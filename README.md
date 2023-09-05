@@ -16,6 +16,8 @@ SECRET=askdbasjdhvakjvsdjasd
 SITE_OWNER_URL=https://t.me/qecez
 SITE_OWNER_NAME=@qecez
 SITE_NAME=Bitmia
+CERT=/path/to/cert.pem
+PRVKEY=/path/to/key.pem
 ```
 
 3. Start the app with `./satdress`
